@@ -6,9 +6,13 @@ from io import BytesIO
 import os
 
 def convert_to_wav(file):
+    print("lets do audio = AudioSegment.from_file(file, format=) ")
     audio = AudioSegment.from_file(file, format="webm")
+    print("lets do  wav_io = BytesIO()")
     wav_io = BytesIO()
+    print("lets do audio.export(wav_io, format=")
     audio.export(wav_io, format="wav")
+    print("lets do audio.export ")
     wav_io.seek(0)
     return wav_io
 

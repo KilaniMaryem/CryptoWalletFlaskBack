@@ -9,7 +9,7 @@ from flask_cors import CORS
 import sys
 import numpy as np
 
-from alchemyapi import AlchemyAPI
+#from alchemyapi import AlchemyAPI
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
@@ -58,6 +58,7 @@ def register_audio():
         return jsonify({"error": "No file part"}), 400
 
     file = request.files['file']
+    print("FILE IS:",file)
     if file.filename == '':
         return jsonify({"error": "No selected file"}), 400
 
@@ -67,13 +68,13 @@ def register_audio():
     try:
     
         wav_io = convert_to_wav(file)
-        minio_client.put_object(
+        """minio_client.put_object(
             bucket_name,
             wav_filename,
             wav_io,
             length=wav_io.getbuffer().nbytes,
             content_type='audio/wav'
-        )
+        )"""
         wav_io.seek(0)  
         fbanks = extract_fbanks(wav_io)  
         embeddings = get_embeddings(fbanks) 
@@ -137,19 +138,38 @@ def verify_audio(public_address):
         
         if positives_mean >= 0.65:
             print("Success")
-            return jsonify({"message": "SUCCESS"}), 200
+            return jsonify({"message": "SUCCESS","status":200}), 200
         else:
             print("Failure")
-            return jsonify({"message": "FAILURE"}), 401
+            return jsonify({"message": "FAILURE","status":401}), 401
 
     except Exception as e:
         print(f"General error: {e}")
         return jsonify({"error": f"General error: {e}"}), 500
 
+@app.route('/check-file', methods=['GET'])
+def check_file():
+    print("IN CHECK FILE ROUTE")
+    public_address = request.args.get('publicAddress')
+    if not public_address:
+        return jsonify({"error": "Public address is required"}), 400
+
+    file_name = f"{public_address}_embeddings.npy"
+
+    try:
+        # Check if the file exists
+        print("CHEKING IF IT EXISTS")
+        objects = minio_client.list_objects(bucket_name, recursive=True)
+        for obj in objects:
+            if obj.object_name == file_name:
+                return jsonify({"exists": True}), 200
+        return jsonify({"exists": False}), 200
+    except S3Error as e:
+        return jsonify({"error": str(e)}), 500
 #----------------------------------------------------------------------------------------------------------------#
 
 
-
+"""
 alchemy = AlchemyAPI(environment['ALCHEMY_API_KEY'])
 
 @app.route('/fetch-nfts', methods=['GET'])
@@ -163,7 +183,7 @@ def fetch_nfts():
         return jsonify(nfts_response)
     except Exception as e:
         print('Error fetching NFTs:', e)
-        return jsonify({'error': 'Error fetching NFTs'}), 500
+        return jsonify({'error': 'Error fetching NFTs'}), 500"""
 
 
 
