@@ -9,6 +9,9 @@ from flask_cors import CORS
 import sys
 import numpy as np
 
+import speech_recognition as sr
+
+
 #from alchemyapi import AlchemyAPI
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
@@ -167,8 +170,39 @@ def check_file():
     except S3Error as e:
         return jsonify({"error": str(e)}), 500
 #----------------------------------------------------------------------------------------------------------------#
+@app.route('/transcribe-audio', methods=['POST'])
+def transcribe_audio():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
 
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+    print("LETS INITIALIZE RECONIZER OBJECT")
+    recognizer = sr.Recognizer()
+    try:
+        print("LETS CONVERT TO WAV")
+        wav_io = convert_to_wav(file) 
+        wav_io.seek(0) 
+        print("LETS CALL sr.AudioFile(wav_io)")
+        audio_data = sr.AudioFile(wav_io)
+        with audio_data as source:
+            print("LETS CALL recognizer.adjust_for_ambient_noise")
+            recognizer.adjust_for_ambient_noise(source, duration=0.5)
+            print("LETS CALL recognizer.record(source)")
+            audio = recognizer.record(source)
+            print("LETS CALL recognizer.recognize_google(audio)")
+            text = recognizer.recognize_google(audio)
+            text = text.lower()
+            return jsonify({"text": text}), 200
+    except sr.UnknownValueError:
+        return jsonify({"error": "Could not understand the audio/Unknown Error"}), 400
+    except sr.RequestError as e:
+        return jsonify({"error": f"Could not request results from Google Speech Recognition service; {e}"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500  
 
+#----------------------------------------------------------------------------------------------------------------#
 """
 alchemy = AlchemyAPI(environment['ALCHEMY_API_KEY'])
 
