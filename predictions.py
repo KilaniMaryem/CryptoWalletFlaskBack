@@ -80,10 +80,8 @@ model_instance.eval()
 
 
 def get_embeddings(x):
-    print('enetered get embeddings fct')
     x = torch.from_numpy(x)
     with torch.no_grad():
         embeddings = model_instance(x)
-    print("will retuen in get embeddings fct")
     print("----------EMBEDDINGS SHAPE--------",embeddings.shape)
     return embeddings.numpy()

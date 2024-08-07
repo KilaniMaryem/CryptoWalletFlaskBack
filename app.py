@@ -61,7 +61,6 @@ def register_audio():
         return jsonify({"error": "No file part"}), 400
 
     file = request.files['file']
-    print("FILE IS:",file)
     if file.filename == '':
         return jsonify({"error": "No selected file"}), 400
 
@@ -152,7 +151,6 @@ def verify_audio(public_address):
 
 @app.route('/check-file', methods=['GET'])
 def check_file():
-    print("IN CHECK FILE ROUTE")
     public_address = request.args.get('publicAddress')
     if not public_address:
         return jsonify({"error": "Public address is required"}), 400
@@ -160,8 +158,6 @@ def check_file():
     file_name = f"{public_address}_embeddings.npy"
 
     try:
-        # Check if the file exists
-        print("CHEKING IF IT EXISTS")
         objects = minio_client.list_objects(bucket_name, recursive=True)
         for obj in objects:
             if obj.object_name == file_name:
@@ -178,20 +174,14 @@ def transcribe_audio():
     file = request.files['file']
     if file.filename == '':
         return jsonify({"error": "No selected file"}), 400
-    print("LETS INITIALIZE RECONIZER OBJECT")
     recognizer = sr.Recognizer()
     try:
-        print("LETS CONVERT TO WAV")
         wav_io = convert_to_wav(file) 
         wav_io.seek(0) 
-        print("LETS CALL sr.AudioFile(wav_io)")
         audio_data = sr.AudioFile(wav_io)
         with audio_data as source:
-            print("LETS CALL recognizer.adjust_for_ambient_noise")
             recognizer.adjust_for_ambient_noise(source, duration=0.5)
-            print("LETS CALL recognizer.record(source)")
             audio = recognizer.record(source)
-            print("LETS CALL recognizer.recognize_google(audio)")
             text = recognizer.recognize_google(audio)
             text = text.lower()
             return jsonify({"text": text}), 200
