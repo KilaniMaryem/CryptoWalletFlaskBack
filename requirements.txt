@@ -1,0 +1,10 @@
+flask
+minio
+flask_cors
+SpeechRecognition
+python_dotenv
+python_speech_features
+numpy 
+librosa
+pydub
+torch
